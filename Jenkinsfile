@@ -45,7 +45,8 @@ pipeline {
     success {
         echo 'Jenkins CI/CD pipeline completed successfully.'
 
-        emailext(
+        mail(
+            to: "raviveera2305@gmail.com",
             subject: "SUCCESS: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
             body: """Jenkins pipeline completed successfully.
 
@@ -54,15 +55,15 @@ Build: #${env.BUILD_NUMBER}
 Status: ${currentBuild.currentResult}
 
 Build URL: ${env.BUILD_URL}
-""",
-            to: "raviveera2305@gmail.com"
+"""
         )
     }
 
     failure {
         echo 'Jenkins CI/CD pipeline failed.'
 
-        emailext(
+        mail(
+            to: "raviveera2305@gmail.com",
             subject: "FAILURE: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
             body: """Jenkins pipeline failed.
 
@@ -71,8 +72,7 @@ Build: #${env.BUILD_NUMBER}
 Status: ${currentBuild.currentResult}
 
 Build URL: ${env.BUILD_URL}
-""",
-            to: "raviveera2305@gmail.com"
+"""
         )
     }
 }
