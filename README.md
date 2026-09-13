@@ -134,3 +134,5 @@ MIT License
 
 
 Jenkins CI/CD pipeline configured.
+
+Jenkins email notification configured.
