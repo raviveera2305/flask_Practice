@@ -115,11 +115,11 @@ The demonstrated test run completed with all four application tests passing. The
 
 **Evidence:** `01-tests-passed-after-mongodb-fix.png`
 
-## Jenkins CI/CD Pipeline
+# 1. Jenkins CI/CD Pipeline for Flask Application
 
 The repository contains a Jenkins Declarative Pipeline in `Jenkinsfile`.
 
-### Pipeline flow
+## Jenkins Pipeline Flow
 
 ```text
 Developer push to GitHub main
@@ -140,14 +140,14 @@ Developer push to GitHub main
     Success / Failure Email
 ```
 
-### Pipeline stages
+## Jenkins Pipeline Stages
 
 1. **Build** — installs the dependencies from `requirements.txt` using the configured Python interpreter.
 2. **Test** — runs `pytest -v` and stops the pipeline if the tests fail.
 3. **Deploy** — copies the application to the Windows staging directory and excludes `.git` metadata and local screenshots.
 4. **Post-build notification** — sends a success or failure email using Jenkins Mailer.
 
-### Jenkins job configuration
+## Jenkins Job Configuration
 
 The Jenkins job is configured as a Pipeline using:
 
@@ -158,13 +158,13 @@ The Jenkins job is configured as a Pipeline using:
 
 **Evidence:** `02-jenkins-pipeline-configuration.png`
 
-### Build and test evidence
+## Jenkins Build and Test
 
 The Jenkins Build and Test stages successfully install the required Python dependencies and execute the automated tests.
 
 **Evidence:** `03-jenkins-build-test-output.png`
 
-### Staging deployment
+## Jenkins Staging Deployment
 
 The pipeline deploys the application to:
 
@@ -179,7 +179,7 @@ The deployment completes successfully after the Build and Test stages pass.
 - `04-jenkins-deployment-success.png` — successful staging deployment and pipeline completion.
 - `05-staging-deployment-files.png` — deployed application files in the staging directory.
 
-## GitHub Webhook Automation
+## Jenkins GitHub Webhook Automation
 
 GitHub push events are integrated with the local Jenkins instance through a webhook. During testing, an ngrok tunnel provided temporary public access to the Jenkins webhook endpoint.
 
@@ -193,7 +193,7 @@ GitHub push events are integrated with the local Jenkins instance through a webh
 
 The ngrok tunnel was used only for assignment testing and should not be left running unnecessarily.
 
-## Email Notifications
+## Jenkins Email Notifications
 
 Jenkins Mailer is configured to use Gmail SMTP with TLS on port `587`.
 
@@ -202,24 +202,26 @@ SMTP credentials are stored in Jenkins Credentials and are not committed to the 
 The pipeline sends:
 
 - A **SUCCESS** notification after a successful pipeline.
-- A **FAILURE** notification when the pipeline fails.
+- A **FAILURE** notification when a pipeline fails.
 
 **Evidence:**
 
 - `11-jenkins-email-configuration.png` — Jenkins email configuration.
 - `12-jenkins-pipeline-success-email.png` — actual Jenkins pipeline SUCCESS notification received by email.
 
-## GitHub Actions CI/CD
+# 2. GitHub Actions CI/CD Pipeline Flask App
 
 GitHub Actions is configured in `.github/workflows/ci-cd.yml`.
 
-### Branch and release strategy
+## GitHub Actions Branch and Release Strategy
 
 - `staging` — runs Build and Test, then packages and uploads a staging deployment artifact.
 - `main` — runs Build and Test for the main development line.
 - `v*` release tags — run Build and Test, then package and upload a production deployment artifact.
 
-### GitHub Actions pipeline flow
+## GitHub Actions Pipeline Flow
+
+### Staging Deployment
 
 ```text
 Push to staging
@@ -234,6 +236,8 @@ Deploy to Staging
 staging-deployment artifact
 ```
 
+### Production Deployment
+
 ```text
 Push version tag (for example v1.0.0)
       |
@@ -247,7 +251,7 @@ Deploy to Production
 production-deployment artifact
 ```
 
-### CI configuration
+## GitHub Actions CI Configuration
 
 The workflow:
 
@@ -259,7 +263,7 @@ The workflow:
 6. Compiles `app.py` as a build verification step.
 7. Packages the validated application for staging or production as appropriate.
 
-### GitHub Secrets
+## GitHub Actions Secrets
 
 The workflow uses the repository secret `FLASK_SECRET_KEY` for the test environment instead of storing the secret value in source control.
 
@@ -271,7 +275,7 @@ SECRET_KEY: ${{ secrets.FLASK_SECRET_KEY }}
 
 No secret value is stored in the repository or README.
 
-### GitHub Actions evidence
+## GitHub Actions Evidence
 
 - `13-github-actions-build-test-success.png` — successful Build and Test workflow run on `staging`.
 - `14-github-actions-staging-deployment-success.png` — successful staging deployment with the `staging-deployment` artifact.
