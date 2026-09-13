@@ -42,12 +42,38 @@ pipeline {
     }
 
     post {
-        success {
-            echo 'Jenkins CI/CD pipeline completed successfully.'
-        }
+    success {
+        echo 'Jenkins CI/CD pipeline completed successfully.'
 
-        failure {
-            echo 'Jenkins CI/CD pipeline failed.'
-        }
+        emailext(
+            subject: "SUCCESS: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+            body: """Jenkins pipeline completed successfully.
+
+Job: ${env.JOB_NAME}
+Build: #${env.BUILD_NUMBER}
+Status: ${currentBuild.currentResult}
+
+Build URL: ${env.BUILD_URL}
+""",
+            to: "raviveera2305@gmail.com"
+        )
     }
+
+    failure {
+        echo 'Jenkins CI/CD pipeline failed.'
+
+        emailext(
+            subject: "FAILURE: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+            body: """Jenkins pipeline failed.
+
+Job: ${env.JOB_NAME}
+Build: #${env.BUILD_NUMBER}
+Status: ${currentBuild.currentResult}
+
+Build URL: ${env.BUILD_URL}
+""",
+            to: "raviveera2305@gmail.com"
+        )
+    }
+}
 }
