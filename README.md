@@ -1,14 +1,16 @@
 # Flask CI/CD Automation
 
-This repository contains the provided Flask/MongoDB application used to implement and demonstrate a DevOps CI/CD assignment. The application itself is treated as the application under test; the CI/CD automation, Jenkins configuration, testing, staging deployment, webhook integration, and notification workflow are the focus of this work.
+This repository contains the provided Flask/MongoDB application used to implement and demonstrate a DevOps CI/CD assignment. The application itself is treated as the application under test; the CI/CD automation, Jenkins configuration, GitHub Actions workflows, testing, staging and production deployment automation, webhook integration, and notification workflow are the focus of this work.
 
 ## CI/CD Objectives
 
-- Automate dependency installation and application testing with Jenkins.
+- Automate dependency installation and application testing with Jenkins and GitHub Actions.
 - Trigger Jenkins automatically from GitHub pushes to `main`.
-- Deploy the tested application to a local staging directory.
+- Run GitHub Actions CI on `main` and `staging`.
+- Deploy validated builds to staging from the `staging` branch.
+- Deploy validated release builds to production from version tags such as `v1.0.0`.
 - Send success and failure email notifications from the Jenkins pipeline.
-- Maintain reproducible configuration in the repository through a Jenkinsfile.
+- Store sensitive configuration through Jenkins Credentials and GitHub Secrets.
 
 ## Application Under Test
 
@@ -32,7 +34,7 @@ These application features are the functionality exercised by the automated test
 | Frontend | HTML, Jinja2, Bootstrap 5 |
 | Configuration | python-dotenv, `.env` |
 | Testing | pytest |
-| CI/CD | Jenkins Declarative Pipeline |
+| CI/CD | Jenkins Declarative Pipeline, GitHub Actions |
 | Source Control | Git, GitHub |
 | Webhook Integration | GitHub Webhook |
 | Notification | Jenkins Mailer with Gmail SMTP/TLS |
@@ -45,6 +47,7 @@ These application features are the functionality exercised by the automated test
 - Jenkins LTS
 - Jenkins Mailer plugin
 - A Gmail SMTP credential configured in Jenkins
+- GitHub repository with Actions enabled
 
 ## Application Setup
 
@@ -108,7 +111,7 @@ Run the test suite locally with:
 pytest -v
 ```
 
-The demonstrated test run completed with all four application tests passing. The same test command is executed by the Jenkins pipeline.
+The demonstrated test run completed with all four application tests passing. The same test command is executed by the Jenkins pipeline and GitHub Actions workflow.
 
 **Evidence:** `01-tests-passed-after-mongodb-fix.png`
 
@@ -206,6 +209,74 @@ The pipeline sends:
 - `11-jenkins-email-configuration.png` — Jenkins email configuration.
 - `12-jenkins-pipeline-success-email.png` — actual Jenkins pipeline SUCCESS notification received by email.
 
+## GitHub Actions CI/CD
+
+GitHub Actions is configured in `.github/workflows/ci-cd.yml`.
+
+### Branch and release strategy
+
+- `staging` — runs Build and Test, then packages and uploads a staging deployment artifact.
+- `main` — runs Build and Test for the main development line.
+- `v*` release tags — run Build and Test, then package and upload a production deployment artifact.
+
+### GitHub Actions pipeline flow
+
+```text
+Push to staging
+      |
+      v
+ Build and Test
+      |
+      v
+Deploy to Staging
+      |
+      v
+staging-deployment artifact
+```
+
+```text
+Push version tag (for example v1.0.0)
+      |
+      v
+ Build and Test
+      |
+      v
+Deploy to Production
+      |
+      v
+production-deployment artifact
+```
+
+### CI configuration
+
+The workflow:
+
+1. Checks out the repository.
+2. Sets up Python 3.12.
+3. Installs dependencies from `requirements.txt`.
+4. Starts MongoDB 7 as a GitHub Actions service.
+5. Runs the four automated pytest tests.
+6. Compiles `app.py` as a build verification step.
+7. Packages the validated application for staging or production as appropriate.
+
+### GitHub Secrets
+
+The workflow uses the repository secret `FLASK_SECRET_KEY` for the test environment instead of storing the secret value in source control.
+
+The secret is referenced securely as:
+
+```yaml
+SECRET_KEY: ${{ secrets.FLASK_SECRET_KEY }}
+```
+
+No secret value is stored in the repository or README.
+
+### GitHub Actions evidence
+
+- `13-github-actions-build-test-success.png` — successful Build and Test workflow run on `staging`.
+- `14-github-actions-staging-deployment-success.png` — successful staging deployment with the `staging-deployment` artifact.
+- `15-github-actions-production-deployment-success.png` — successful production deployment triggered by the `v1.0.0` tag with the `production-deployment` artifact.
+
 ## CI/CD Evidence Index
 
 | Screenshot | Evidence demonstrated |
@@ -213,7 +284,7 @@ The pipeline sends:
 | `01-tests-passed-after-mongodb-fix.png` | Local automated tests passing after the local MongoDB connection issue was resolved. |
 | `02-jenkins-pipeline-configuration.png` | Jenkins Pipeline configured from the GitHub repository and `Jenkinsfile`. |
 | `03-jenkins-build-test-output.png` | Jenkins dependency installation and passing pytest execution. |
-| `04-jenkins-deployment-success.png` | Successful staging deployment and pipeline completion. |
+| `04-jenkins-deployment-success.png` | Successful Jenkins staging deployment and pipeline completion. |
 | `05-staging-deployment-files.png` | Application files present in the Jenkins staging directory. |
 | `06-jenkins-github-trigger.png` | Jenkins GitHub hook trigger configuration. |
 | `07-ngrok-jenkins-tunnel.png` | Temporary public tunnel used during webhook testing. |
@@ -222,12 +293,17 @@ The pipeline sends:
 | `10-jenkins-auto-build-success.png` | Automatically triggered Jenkins build completed successfully. |
 | `11-jenkins-email-configuration.png` | Jenkins Gmail SMTP/email notification configuration. |
 | `12-jenkins-pipeline-success-email.png` | Actual successful Jenkins pipeline email received. |
+| `13-github-actions-build-test-success.png` | GitHub Actions Build and Test completed successfully on `staging`. |
+| `14-github-actions-staging-deployment-success.png` | GitHub Actions staging deployment completed successfully. |
+| `15-github-actions-production-deployment-success.png` | GitHub Actions production deployment completed successfully from tag `v1.0.0`. |
 
 ## Repository Structure
 
 ```text
 flask_Practice/
 ├── .github/
+│   └── workflows/
+│       └── ci-cd.yml
 ├── screenshots/
 ├── templates/
 ├── .gitignore
@@ -245,7 +321,8 @@ flask_Practice/
 ## Security Notes
 
 - Never commit `.env`, passwords, app passwords, API keys, or other secrets.
-- Store Jenkins SMTP credentials in Jenkins Credentials.
+- Store Jenkins SMTP credentials securely in Jenkins Credentials.
+- Store GitHub Actions secrets in GitHub Secrets rather than source files.
 - Keep temporary public tunnels such as ngrok disabled when they are not required.
 - Use a dedicated SMTP credential rather than a normal Gmail account password.
 
