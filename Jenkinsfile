@@ -56,6 +56,7 @@ Status: ${currentBuild.currentResult}
 Build URL: ${env.BUILD_URL}
 """,
             to: "raviveera2305@gmail.com"
+            from: "your-same-gmail-address"
         )
     }
 
@@ -73,6 +74,7 @@ Status: ${currentBuild.currentResult}
 Build URL: ${env.BUILD_URL}
 """,
             to: "raviveera2305@gmail.com"
+            from: "your-same-gmail-address"
         )
     }
 }
