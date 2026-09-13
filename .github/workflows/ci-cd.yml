@@ -42,7 +42,7 @@ jobs:
       - name: Run tests
         env:
           MONGO_URI: mongodb://localhost:27017/test_student_db
-          SECRET_KEY: github-actions-test-secret
+          SECRET_KEY: ${{ secrets.FLASK_SECRET_KEY }}
         run: |
           pytest -v
 
