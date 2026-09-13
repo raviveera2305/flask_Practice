@@ -1,45 +1,61 @@
-# Student Registration System
+# Flask CI/CD Automation
 
-A lightweight Flask web application for managing student records with MongoDB. The application supports creating, viewing, updating, and deleting student records through a simple Bootstrap-based web interface.
+This repository contains the provided Flask/MongoDB application used to implement and demonstrate a DevOps CI/CD assignment. The application itself is treated as the application under test; the CI/CD automation, Jenkins configuration, testing, staging deployment, webhook integration, and notification workflow are the focus of this work.
 
-## Features
+## CI/CD Objectives
 
-- View all registered students
-- Add new student records
-- Update existing student records
-- Delete student records
-- Delete confirmation flow
-- Responsive UI with Bootstrap 5
+- Automate dependency installation and application testing with Jenkins.
+- Trigger Jenkins automatically from GitHub pushes to `main`.
+- Deploy the tested application to a local staging directory.
+- Send success and failure email notifications from the Jenkins pipeline.
+- Maintain reproducible configuration in the repository through a Jenkinsfile.
+
+## Application Under Test
+
+The repository contains a Flask application backed by MongoDB. Its existing functionality includes:
+
+- Viewing student records
+- Adding student records
+- Updating student records
+- Deleting student records
+- Bootstrap-based web pages
 - MongoDB persistence through Flask-PyMongo
-- Environment-based configuration using `.env`
+
+These application features are the functionality exercised by the automated tests; they are not presented here as application development work completed for this assignment.
 
 ## Technology Stack
 
-| Layer | Technology |
+| Area | Technology |
 |---|---|
-| Backend | Python, Flask |
+| Application | Python, Flask |
 | Database | MongoDB, Flask-PyMongo, PyMongo |
 | Frontend | HTML, Jinja2, Bootstrap 5 |
 | Configuration | python-dotenv, `.env` |
 | Testing | pytest |
-| CI/CD | Jenkins Pipeline, GitHub Webhooks |
+| CI/CD | Jenkins Declarative Pipeline |
+| Source Control | Git, GitHub |
+| Webhook Integration | GitHub Webhook |
+| Notification | Jenkins Mailer with Gmail SMTP/TLS |
+
+## Prerequisites
+
+- Python 3.x
+- MongoDB running locally or an accessible MongoDB instance
+- Git
+- Jenkins LTS
+- Jenkins Mailer plugin
+- A Gmail SMTP credential configured in Jenkins
 
 ## Application Setup
 
-### Prerequisites
-
-- Python 3.x
-- MongoDB running locally or a reachable MongoDB instance
-- Git
-
-### 1. Clone the repository
+### Clone the repository
 
 ```bash
 git clone https://github.com/raviveera2305/flask_Practice.git
 cd flask_Practice
 ```
 
-### 2. Create and activate a virtual environment
+### Create a virtual environment
 
 **Windows PowerShell:**
 
@@ -55,13 +71,13 @@ python -m venv venv
 source venv/bin/activate
 ```
 
-### 3. Install dependencies
+### Install dependencies
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### 4. Configure environment variables
+### Configure environment variables
 
 Create a `.env` file in the project root:
 
@@ -72,39 +88,148 @@ SECRET_KEY=your-secret-key
 
 Do not commit `.env` or real credentials to source control.
 
-### 5. Run the application
+### Run the application
 
 ```bash
 python app.py
 ```
 
-The application runs on:
+The application is available at:
 
 ```text
 http://localhost:5000
 ```
 
-## Testing
+## Automated Testing
 
-Run the automated test suite with:
+Run the test suite locally with:
 
 ```bash
 pytest -v
 ```
 
-The test suite covers the main application operations, including viewing the home page and adding, updating, and deleting student records.
+The demonstrated test run completed with all four application tests passing. The same test command is executed by the Jenkins pipeline.
 
-## Project Structure
+**Evidence:** `01-tests-passed-after-mongodb-fix.png`
+
+## Jenkins CI/CD Pipeline
+
+The repository contains a Jenkins Declarative Pipeline in `Jenkinsfile`.
+
+### Pipeline flow
+
+```text
+Developer push to GitHub main
+            |
+            v
+      GitHub Webhook
+            |
+            v
+      Jenkins Pipeline
+       /     |      \
+      v      v       v
+    Build   Test    Deploy
+      |      |       |
+   Install pytest  Staging
+   packages suite  deployment
+            |
+            v
+    Success / Failure Email
+```
+
+### Pipeline stages
+
+1. **Build** — installs the dependencies from `requirements.txt` using the configured Python interpreter.
+2. **Test** — runs `pytest -v` and stops the pipeline if the tests fail.
+3. **Deploy** — copies the application to the Windows staging directory and excludes `.git` metadata and local screenshots.
+4. **Post-build notification** — sends a success or failure email using Jenkins Mailer.
+
+### Jenkins job configuration
+
+The Jenkins job is configured as a Pipeline using:
+
+- Repository: `raviveera2305/flask_Practice`
+- Branch: `main`
+- Pipeline definition: `Jenkinsfile`
+- Trigger: GitHub hook trigger for GITScm polling
+
+**Evidence:** `02-jenkins-pipeline-configuration.png`
+
+### Build and test evidence
+
+The Jenkins Build and Test stages successfully install the required Python dependencies and execute the automated tests.
+
+**Evidence:** `03-jenkins-build-test-output.png`
+
+### Staging deployment
+
+The pipeline deploys the application to:
+
+```text
+C:\Jenkins-Staging\flask_Practice
+```
+
+The deployment completes successfully after the Build and Test stages pass.
+
+**Evidence:**
+
+- `04-jenkins-deployment-success.png` — successful staging deployment and pipeline completion.
+- `05-staging-deployment-files.png` — deployed application files in the staging directory.
+
+## GitHub Webhook Automation
+
+GitHub push events are integrated with the local Jenkins instance through a webhook. During testing, an ngrok tunnel provided temporary public access to the Jenkins webhook endpoint.
+
+**Evidence:**
+
+- `06-jenkins-github-trigger.png` — Jenkins GitHub hook trigger configuration.
+- `07-ngrok-jenkins-tunnel.png` — temporary ngrok forwarding to Jenkins.
+- `08-github-webhook-configured.png` — GitHub webhook configuration.
+- `09-jenkins-github-auto-trigger.png` — Jenkins automatically triggered by a GitHub push.
+- `10-jenkins-auto-build-success.png` — automatically triggered build completed successfully.
+
+The ngrok tunnel was used only for assignment testing and should not be left running unnecessarily.
+
+## Email Notifications
+
+Jenkins Mailer is configured to use Gmail SMTP with TLS on port `587`.
+
+SMTP credentials are stored in Jenkins Credentials and are not committed to the repository.
+
+The pipeline sends:
+
+- A **SUCCESS** notification after a successful pipeline.
+- A **FAILURE** notification when the pipeline fails.
+
+**Evidence:**
+
+- `11-jenkins-email-configuration.png` — Jenkins email configuration.
+- `12-jenkins-pipeline-success-email.png` — actual Jenkins pipeline SUCCESS notification received by email.
+
+## CI/CD Evidence Index
+
+| Screenshot | Evidence demonstrated |
+|---|---|
+| `01-tests-passed-after-mongodb-fix.png` | Local automated tests passing after the local MongoDB connection issue was resolved. |
+| `02-jenkins-pipeline-configuration.png` | Jenkins Pipeline configured from the GitHub repository and `Jenkinsfile`. |
+| `03-jenkins-build-test-output.png` | Jenkins dependency installation and passing pytest execution. |
+| `04-jenkins-deployment-success.png` | Successful staging deployment and pipeline completion. |
+| `05-staging-deployment-files.png` | Application files present in the Jenkins staging directory. |
+| `06-jenkins-github-trigger.png` | Jenkins GitHub hook trigger configuration. |
+| `07-ngrok-jenkins-tunnel.png` | Temporary public tunnel used during webhook testing. |
+| `08-github-webhook-configured.png` | GitHub webhook configured for Jenkins push events. |
+| `09-jenkins-github-auto-trigger.png` | Jenkins automatically triggered by a GitHub push. |
+| `10-jenkins-auto-build-success.png` | Automatically triggered Jenkins build completed successfully. |
+| `11-jenkins-email-configuration.png` | Jenkins Gmail SMTP/email notification configuration. |
+| `12-jenkins-pipeline-success-email.png` | Actual successful Jenkins pipeline email received. |
+
+## Repository Structure
 
 ```text
 flask_Practice/
 ├── .github/
 ├── screenshots/
 ├── templates/
-│   ├── base.html
-│   ├── index.html
-│   ├── add_student.html
-│   └── update_student.html
 ├── .gitignore
 ├── app.py
 ├── Jenkinsfile
@@ -117,81 +242,12 @@ flask_Practice/
 └── azure-pipelines.yml
 ```
 
-## Jenkins CI/CD Pipeline
+## Security Notes
 
-The project includes a Jenkins declarative pipeline that automates dependency installation, testing, and deployment to a staging directory.
-
-### Pipeline flow
-
-```text
-GitHub push to main
-        |
-        v
-GitHub Webhook
-        |
-        v
-Jenkins Pipeline
-   |       |       |
- Build    Test   Deploy
-   |       |       |
-   v       v       v
-Install  pytest  Staging
-packages  suite  deployment
-        |
-        v
-Success / Failure email
-```
-
-### Pipeline stages
-
-1. **Build** — installs Python dependencies from `requirements.txt`.
-2. **Test** — runs the automated pytest suite.
-3. **Deploy** — copies the application files to the Jenkins staging directory while excluding Git metadata and local screenshots.
-4. **Post-build notification** — sends an email for successful or failed pipeline executions.
-
-### Jenkins configuration
-
-The Jenkins job is configured as a Pipeline using the repository's `Jenkinsfile` and the `main` branch.
-
-The pipeline is triggered automatically by GitHub push events through the Jenkins GitHub webhook integration.
-
-For the demonstrated Windows Jenkins environment, the staging deployment directory is:
-
-```text
-C:\Jenkins-Staging\flask_Practice
-```
-
-### Email notification
-
-Jenkins is configured with Gmail SMTP using TLS on port `587`. The pipeline uses Jenkins' standard `mail` step for success and failure notifications.
-
-SMTP credentials are stored in Jenkins credentials rather than in the repository.
-
-## Jenkins Evidence
-
-The following screenshots document the completed CI/CD implementation. They are stored in the `screenshots/` directory and are referenced here for traceability.
-
-| Screenshot | Evidence | Reference |
-|---|---|---|
-| `01-tests-passed-after-mongodb-fix.png` | Local pytest validation after resolving the local MongoDB connection issue. | [View evidence](screenshots/01-tests-passed-after-mongodb-fix.png) |
-| `02-jenkins-pipeline-configuration.png` | Jenkins Pipeline job configured from the GitHub repository and `Jenkinsfile`. | [View evidence](screenshots/02-jenkins-pipeline-configuration.png) |
-| `03-jenkins-build-test-output.png` | Jenkins Build and Test stages, including the passing pytest suite. | [View evidence](screenshots/03-jenkins-build-test-output.png) |
-| `04-jenkins-deployment-success.png` | Successful Jenkins staging deployment and completed pipeline. | [View evidence](screenshots/04-jenkins-deployment-success.png) |
-| `05-staging-deployment-files.png` | Application files present in the Jenkins staging directory. | [View evidence](screenshots/05-staging-deployment-files.png) |
-| `06-jenkins-github-trigger.png` | Jenkins GitHub hook trigger configuration. | [View evidence](screenshots/06-jenkins-github-trigger.png) |
-| `07-ngrok-jenkins-tunnel.png` | Temporary public tunnel used to expose the local Jenkins webhook endpoint for testing. | [View evidence](screenshots/07-ngrok-jenkins-tunnel.png) |
-| `08-github-webhook-configured.png` | GitHub webhook configured to deliver push events to Jenkins. | [View evidence](screenshots/08-github-webhook-configured.png) |
-| `09-jenkins-github-auto-trigger.png` | Jenkins automatically triggered by a GitHub push. | [View evidence](screenshots/09-jenkins-github-auto-trigger.png) |
-| `10-jenkins-auto-build-success.png` | Automatically triggered Jenkins build completed successfully. | [View evidence](screenshots/10-jenkins-auto-build-success.png) |
-| `11-jenkins-email-configuration.png` | Jenkins email notification configuration, including Gmail SMTP settings. | [View evidence](screenshots/11-jenkins-email-configuration.png) |
-| `12-jenkins-pipeline-success-email.png` | Actual Jenkins pipeline success notification received by email. | [View evidence](screenshots/12-jenkins-pipeline-success-email.png) |
-
-## Security and Configuration Notes
-
-- Keep `.env` out of source control.
-- Store SMTP passwords, API keys, and other credentials in Jenkins Credentials or GitHub Secrets rather than in source files.
-- The ngrok tunnel shown in the evidence was used only for webhook testing. It should not be left running unnecessarily because it exposes the local Jenkins service through a public endpoint.
-- Ensure MongoDB is running and accessible through the configured `MONGO_URI` before starting the application or running integration tests.
+- Never commit `.env`, passwords, app passwords, API keys, or other secrets.
+- Store Jenkins SMTP credentials in Jenkins Credentials.
+- Keep temporary public tunnels such as ngrok disabled when they are not required.
+- Use a dedicated SMTP credential rather than a normal Gmail account password.
 
 ## License
 
